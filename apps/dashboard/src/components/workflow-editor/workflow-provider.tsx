@@ -2,33 +2,39 @@ import { PatchWorkflowDto, StepDataDto, UpdateWorkflowDto, WorkflowResponseDto }
 import { createContext, ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useBlocker, useNavigate, useParams } from 'react-router-dom';
 
-import { useEnvironment } from '@/context/environment/hooks';
-import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
-import { useUpdateWorkflow } from '@/hooks/use-update-workflow';
-import { usePatchWorkflow } from '@/hooks/use-patch-workflow';
-import { createContextHook } from '@/utils/context';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { toast } from 'sonner';
-import { RiCloseFill } from 'react-icons/ri';
 import {
   AlertDialog,
-  AlertDialogHeader,
   AlertDialogContent,
-  AlertDialogTitle,
   AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/primitives/alert-dialog';
-import { RiAlertFill } from 'react-icons/ri';
-import { CheckCircleIcon } from 'lucide-react';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useInvocationQueue } from '@/hooks/use-invocation-queue';
+import { usePatchWorkflow } from '@/hooks/use-patch-workflow';
+import { useUpdateWorkflow } from '@/hooks/use-update-workflow';
+import { createContextHook } from '@/utils/context';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { getWorkflowIdFromSlug, STEP_DIVIDER } from '@/utils/step';
+import { CheckCircleIcon } from 'lucide-react';
+import { RiAlertFill, RiCloseFill } from 'react-icons/ri';
+import { toast } from 'sonner';
 import { showErrorToast, showSavingToast, showSuccessToast } from './toasts';
-import { STEP_DIVIDER } from '@/utils/step';
-import { getWorkflowIdFromSlug } from '@/utils/step';
+
+export type UpdateWorkflowFn = ({
+  data,
+  onSuccess,
+}: {
+  data: UpdateWorkflowDto;
+  onSuccess?: (workflow: WorkflowResponseDto) => void;
+}) => void;
 
 export type WorkflowContextType = {
   isPending: boolean;
   workflow?: WorkflowResponseDto;
   step?: StepDataDto;
-  update: (data: UpdateWorkflowDto) => void;
+  update: UpdateWorkflowFn;
   patch: (data: PatchWorkflowDto) => void;
 };
 
@@ -105,9 +111,13 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const isUpdatePatchPending = isPatchPending || isUpdatePending || hasPendingItems;
 
   const update = useCallback(
-    (data: UpdateWorkflowDto) => {
+    ({ data, onSuccess }: { data: UpdateWorkflowDto; onSuccess?: (workflow: WorkflowResponseDto) => void }) => {
       if (workflow) {
-        enqueue(() => updateWorkflow({ workflowSlug: workflow.slug, workflow: { ...data } }));
+        enqueue(async () => {
+          const res = await updateWorkflow({ workflowSlug: workflow.slug, workflow: { ...data } });
+          onSuccess?.(res);
+          return res;
+        });
       }
     },
     [enqueue, updateWorkflow, workflow]

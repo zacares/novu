@@ -1,17 +1,20 @@
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { useForm, useWatch } from 'react-hook-form';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ChannelTypeEnum, WorkflowPreferences, WorkflowResponseDto } from '@novu/shared';
+import { motion } from 'motion/react';
+import { useMemo } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { RiArrowLeftSLine, RiCloseFill, RiInformationFill } from 'react-icons/ri';
-import { ChannelTypeEnum, UpdateWorkflowDto, WorkflowPreferences, WorkflowResponseDto } from '@novu/shared';
+import { Link } from 'react-router-dom';
+import { z } from 'zod';
 
 import { SidebarContent, SidebarHeader } from '@/components/side-navigation/sidebar';
 import { UserPreferencesFormSchema } from '@/components/workflow-editor/schema';
+import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum, WorkflowOriginEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { PageMeta } from '../page-meta';
@@ -22,13 +25,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from '../primitives
 import { Separator } from '../primitives/separator';
 import { Step } from '../primitives/step';
 import { Switch } from '../primitives/switch';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { TelemetryEvent } from '@/utils/telemetry';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
 type ConfigureWorkflowFormProps = {
   workflow: WorkflowResponseDto;
-  update: (data: UpdateWorkflowDto) => void;
+  update: UpdateWorkflowFn;
 };
 
 const CHANNEL_LABELS_LOOKUP: Record<`${ChannelTypeEnum}` | 'all', string> = {
@@ -87,10 +88,12 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
 
   const updateUserPreference = (userPreferences: WorkflowPreferences | null) => {
     update({
-      ...workflow,
-      preferences: {
-        ...workflow.preferences,
-        user: userPreferences,
+      data: {
+        ...workflow,
+        preferences: {
+          ...workflow.preferences,
+          user: userPreferences,
+        },
       },
     });
 

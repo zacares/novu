@@ -28,6 +28,14 @@ export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {
   [StepTypeEnum.CUSTOM]: 'Custom',
 };
 
+export const AUTO_OPEN_DRAWER_AFTER_CREATION_STEP_TYPES: StepTypeEnum[] = [
+  StepTypeEnum.EMAIL,
+  StepTypeEnum.SMS,
+  StepTypeEnum.IN_APP,
+  StepTypeEnum.CHAT,
+  StepTypeEnum.PUSH,
+];
+
 export const DEFAULT_CONTROL_DELAY_AMOUNT = 30;
 export const DEFAULT_CONTROL_DELAY_UNIT = TimeUnitEnum.SECONDS;
 export const DEFAULT_CONTROL_DELAY_TYPE = 'regular';
